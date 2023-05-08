@@ -2,7 +2,7 @@
 import socket
 
 HOST = 'localhost' # maquina onde esta o servidor
-PORT = 10001       # porta que o servidor esta escutando
+PORT = 10002       # porta que o servidor esta escutando
 
 def iniciaCliente():
 	'''Cria um socket de cliente e conecta-se ao servidor.
@@ -20,7 +20,7 @@ def fazRequisicoes(sock):
 	Entrada: socket conectado ao servidor'''
 	# le as mensagens do usuario ate ele digitar 'fim'
 	while True: 
-		msg = input("Digite uma mensagem ('fim' para terminar):")
+		msg = input("Você: ")
 		if msg == 'fim': break 
 
 		msg='\n'+ msg
@@ -37,6 +37,12 @@ def fazRequisicoes(sock):
 	sock.close()
 
 def main():
+	print("\nBem vindo ao dicionário remoto do Rafael!\n")
+	print("São três comandos disponíveis:")
+	print("  -read \"chave\" -> lê no dicionário")
+	print("  -write \"chave\" \"valor\" -> escreve no dicionário")
+	print("  -fim -> encerra a conexão")
+	print("Boa diversão!\n")
 	'''Funcao principal do cliente'''
 	#inicia o cliente
 	sock = iniciaCliente()

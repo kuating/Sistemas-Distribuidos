@@ -10,16 +10,19 @@ import os
 import re
 
 HOST = '' # vazio indica que podera receber requisicoes a partir de qq interface de rede da maquina
-PORT = 10001 # porta de acesso
+PORT = 10002 # porta de acesso
 
-entradas = [socket.socket()] #MUDAR
+entradas = [sys.stdin] #MUDAR
 conexoes = {}
 
 dicionario = {}
 
+lock = threading.Lock()
+
 def carregaDicionario():
 	if os.path.exists("dicionario.txt"):
 		with open("dicionario.txt", "r") as arquivo:
+			global dicionario
 			dicionario = json.load(arquivo)
 
 def salvaDicionario():
@@ -59,37 +62,46 @@ def atendeRequisicoes(clisock, endr):
 			clisock.close() # encerra a conexao com o cliente
 			return
 		print(str(endr) + ': ')
-		entrada = str(data, encoding='utf-8').split('\n')
+		entrada = str(data, encoding='utf-8').split('\n')[1:]
 		for comando in entrada:
-			#command_string = 'read "filename.txt"'
-			# or command_string = 'write "new_file.txt" "Hello, world!"'
-
+			#match de regex para comandos
 			read_match = re.match(r'^read\s+"(.+)"$', comando)
+			write_match = re.match(r'^write\s+"(.+)"\s+"(.+)"$', comando)
+			
 			if read_match:
 				chave = read_match.group(1)
+				lock.acquire()
 				if(chave in dicionario):
 					msg = f"D[\'{chave}\']={dicionario[chave]}"
 				else:
 					msg = f"D[\'{chave}\']=[]"
-				print(f"checou D[\'{chave}\']")
+				lock.release()
+				print(f"checou D[\'{chave}\'].")
 				clisock.send(msg.encode('utf-8'))
-
-			# match the write command
-			write_match = re.match(r'^write\s+"(.+)"\s+"(.+)"$', comando)
-			if write_match:
+			
+			elif write_match:
 				chave = write_match.group(1)
 				conteudo = write_match.group(2)
+				lock.acquire()
 				if(chave in dicionario):
 					dicionario[chave].append(conteudo)
 					dicionario[chave].sort()
-					print(f"Chave \'{chave}\' já existia, o valor \'{conteudo}\' foi adicionado.")
-					msg = f"D[\'{chave}\']=BLAH"
-					clisock.send(msg.encode('utf-8'))
+					salvaDicionario()
+					print(f"adicionou valor \'{conteudo}\' a D[\'{chave}\']. Chave já existia.")
+					msg = f"D[\'{chave}\'] já existia, valor \'{conteudo}\' adicionado"
 				else:
 					dicionario[chave]=[conteudo]
-					print(f"Chave \'{chave}\' não existia, o valor \'{conteudo}\' foi adicionado.")
-					msg = f"D[\'{chave}\']=BLAH"
-					clisock.send(msg.encode('utf-8'))
+					salvaDicionario()
+					print(f"adicionou valor \'{conteudo}\' a D[\'{chave}\']. Chave não existia.")
+					msg = f"D[\'{chave}\'] não existia, valor \'{conteudo}\' adicionado"
+				lock.release()
+				clisock.send(msg.encode('utf-8'))
+			
+			else:
+				print(f"enviou comando desconhecido.")
+				msg = f"Comando não reconhecido, utilize read \"chave\" ou write \"chave\" \"valor\"."
+				clisock.send(msg.encode('utf-8'))
+
 
 def main():
 	'''Inicializa e implementa o loop principal (infinito) do servidor'''
@@ -108,15 +120,30 @@ def main():
 				clientes.append(cliente) #armazena a referencia da thread para usar com join()
 			elif pronto == sys.stdin: #entrada padrao
 				cmd = input()
+				remove_match = re.match(r'^remove\s+"(.+)"$', cmd)
 				if cmd == 'fim': #solicitacao de finalizacao do servidor
 					for c in clientes: #aguarda todas as threads terminarem
 						c.join()
 					sock.close()
-					salvaDicionario()
+					salvaDicionario() #Não preciso de join, pois threads morreram e nao aceito mais conexões
 					sys.exit()
+				elif remove_match:
+					chave = remove_match.group(1)
+					lock.acquire()
+					if(chave in dicionario):
+						dicionario.pop(chave)
+						salvaDicionario()
+						print(f"Chave \'{chave}\' removida.")
+					else:
+						print(f"Chave \'{chave}\' inexistente.")
+					lock.release()
 				elif cmd == 'hist': #outro exemplo de comando para o servidor
 					print(str(conexoes.values()))
 				elif cmd == 'print':
+					lock.acquire()
 					mostraDicionario()
+					lock.release()
+				else:
+					print("Comando não reconhecido")
 
 main()

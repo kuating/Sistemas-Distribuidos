@@ -1,7 +1,7 @@
 import socket
 
-HOST = '127.0.0.1'  # Quer dizer que ao rodar .connect(), consigo acessar qualquer endereço da maquina local
-PORT = 5001  # Porta para chegada de conexão
+HOST = ''  # Quer dizer que ao rodar .connect(), consigo acessar qualquer endereço da maquina local
+PORT = 5000  # Porta para chegada de conexão
 
 # Cria socket
 with socket.socket() as sock:

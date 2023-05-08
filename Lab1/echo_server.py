@@ -1,7 +1,7 @@
 import socket
 
-HOST = "127.0.0.1"
-PORT = 5001
+HOST = "192.168.15.2"
+PORT = 5001 
 
 with socket.socket() as sock:
     sock.bind((HOST, PORT))

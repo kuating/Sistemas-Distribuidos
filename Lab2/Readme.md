@@ -22,7 +22,7 @@ Os componentes são:
 
 **Server Request Handler** - Identifica o comando e parâmetros dados pelo servidor, dispara o comando para o dicionário. 
 
-**File with Dictionary** - A base de dados, contém o dicionário em si. É atualizada em toda mudança, na prática é um json e se comunica com open. 
+**File with Dictionary** - A base de dados, contém o dicionário em si. É atualizada em toda mudança, na prática é um json e se comunica com open.
 
 **Feedback Generator** - Recebe as mudanças no dicionário, ou entradas lidas e enviam para as respectivas interfaces que requisitaram. É sensível a se houve êxito nas operações, ou se chave já existia.
 
@@ -39,7 +39,26 @@ A interface fornece as documentação das possíveis requisições e o usuário 
 
 Desde então, o cliente fica na espera de uma resposta, que pode ser o valor na chave, a lista de valores, ou um comunicado de que a chave não consta.
 
+Uma outra observação, como o servidor é o único que acessa e pratica mudanças no dicionário, não haverá necessidade de carregar o dicionário toda vez que for utilizá-lo, mas o salvamento pode ser feito para garantir que que nenhuma mudança é perdida se o servidor tiver uma parada inesperada. 
 
 
 ### **Atividade 3** - Implementação da Arquitetura
 
+A implementação é análoga completamente ao que foi descrito até agora. Foi utilizado como base o exemplo disponibilizado em aula, de servidor com thread e select.
+
+Os seguintes compontentes foram implementados como:
+
+**Client Interface** - Implementada em separada no arquivo do cliente. Julguei ser modularização o suficiente.
+
+**Server Interface** - Implementada na função trataRequisicaoServidor(), server.py.
+
+**Client Request Handler** - Implementado em atendeRequisicoes(), server.py 
+
+**Server Request Handler** - Implementado dentro da função trataRequisicaoServidor(), tudo que é depois dos if's. Não pensei em modularizar mais ainda o interior dessa função. 
+
+**File with Dictionary** - O dicionário é implementado com 7 funções e uma variável global. (em retrospectiva, uma classe teria sido ideal). As funções são: carregaDicionario(), salvaDicionario(), mostraDicionario(), contemDicionario(), popDicionario(), addSortDicionario(), getDicionario(). Todas possuem comentários explicando, mas sao auto expicativas.
+
+**Feedback Generator** - Implementado de forma não modularizada, visto que é composto de não mais que 2 linhas. Está em atendeRequisicoes().
+
+
+Por último, foram testados diversos clientes (>5) para um servidor. Não existiu um caso de teste para testar a atomicidade de operações com o dicionário, apesar de estar devidamente implementado com locks. Também não foi possível testar a chegada de mais de um comando em recv, mas isso está sendo levado em conta também, usando '/n' para separá-los.

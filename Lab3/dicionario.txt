@@ -1,0 +1,1 @@
+{"silvana": ["aceita trabalhos entregues com poucas horas de atraso", "eh incrivel", "eh otima professora"], "rafael": ["entrega trabalhos atrasado"]}
